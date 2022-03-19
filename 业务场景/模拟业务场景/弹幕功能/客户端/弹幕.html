@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=id, initial-scale=1.0">
+    <title>Document</title>
+    <style type="text/css">
+        *{ margin: 0; padding: 0;}
+        #box{ width: 542px; height: 330px;
+        border: 3px solid goldenrod;
+        margin-left:300px;}
+       #btm{margin: 0;padding: 0; height: 30px;background: goldenrod;
+       display: flex; z-index: 999; position: relative; }
+       #btm span{ flex: 1; flex-direction: column;font: 16px/30px "微软雅黑";
+       color: #fff;  text-align: center; cursor: pointer;}
+       #btm span:nth-child(1){ flex: 3;}
+       #btm span input{ width:100% ; height: 30px; font: 16px/30px "微软雅黑";
+       border: none; outline: none;}
+       #content{ height: 300px; position: relative; z-index: 999;
+       background:rgba(0,0,0,0.7)}
+       #content span{color:#fff; height: 30px; font: 14px/30px "微软雅黑"; position: absolute;left:542px;
+       white-space: nowrap;}
+       #v{ position: absolute;
+       left: 303px; top: -32px; width: 542px; height: 358px; background: url(2.png);}
+    </style>
+</head>
+<body>
+    <div id="box" style="position: relative;">
+        <video src="./teacher.mp4" height="330" width="542"></video>
+        <div id="content" style="position: absolute;top: 0;width: 100%;height: 100%;z-index: 1;"></div>
+        <div id="btm" style="position: absolute;bottom: 0;z-index: 99;">
+            <span><input type="text" id="text" /></span>
+            <span id="sendCon">发送</span>
+            <span id="hideCon">隐藏</span>
+            <span id="showCon">显示</span>
+        </div>
+    </div>
+    <div id="v"></div>
+</body>
+<script src="./sport.js"></script>
+<script>
+  var ws;
+  function connectWs () {
+    var id = parseInt((Math.random()*10000000),10).toString(16);
+    // console.log(id)
+    if(window.WebSocket){
+        var ws = new WebSocket('ws://127.0.0.1:5000');
+
+        ws.onopen = function(e){
+            console.log("连接服务器成功");
+            ws.send('getBulletScreen+' + id.toString());
+        }
+        ws.onclose = function(e){
+            console.log("服务器关闭");
+        }
+        ws.onerror = function(){
+            console.log("连接出错");
+        }
+
+        ws.onmessage = function (e) {
+          console.log(e.data)
+          let list = e.data.split(',');
+          for (let i = 0; i < list.length; i++) {
+            setTimeout(() => {
+              sendMessage(list[i])
+            }, i*200);
+          }
+        }
+        return ws;
+    }
+  }
+    
+
+  function $(id) {
+        return document.getElementById(id)
+    }
+  // 封装一个函数，实现发送消息
+  function sendMessage (value) {
+        var oSpan = document.createElement('span');
+        
+        if (value !== undefined) {
+          oSpan.innerHTML = value
+        } else {
+          oSpan.innerHTML = $("text").value;
+        }
+        
+        $('content').appendChild(oSpan)
+ 
+        oSpan.style.top = Math.floor(Math.random() * 280) + 'px'
+ 
+        var oSpanWidth = oSpan.offsetWidth;
+        startMove(oSpan,{"left": -oSpanWidth}, function(){
+            oSpan.remove()
+        })
+ 
+        $("text").value = ''
+        
+    }
+  // 鼠标发送按钮
+  $('sendCon').onclick = function(){
+      sendMessage();
+  }
+  // 键盘发送
+  document.onkeydown = function (e) { // 回车提交表单
+  // 兼容FF和IE和Opera
+      var theEvent = window.event || e;
+      var code = theEvent.keyCode || theEvent.which || theEvent.charCode;
+      if (code == 13) {
+          sendMessage();
+      }
+  }
+
+  // 隐藏： 将运动得消息隐藏，背景图片亮度增强
+  $('hideCon').onclick = function () {
+      if (ws) {
+        ws.close();
+      }
+      $('content').style.display= 'none'
+  }
+
+  // 显示： 弹幕继续向前运动 背景图片变模糊
+  $('showCon').onclick = function () {
+      ws = connectWs()
+      $('content').style.display = 'block'
+  }
+</script>
+</html>
